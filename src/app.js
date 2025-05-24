@@ -4,13 +4,15 @@ const User = require("./models/user");
 const app = express();
 const port = 3003;
 
+// Add validations using validator library installed
+// Prefer API level validations over schema level validations
+
 // Importing the body-parser middleware from json to javascript object
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
     try {
         const body = req.body;
-        console.log(body);
         // Creating a new instance of the User model
         const newUser = new User(body);
         await newUser.save();
@@ -65,12 +67,20 @@ app.delete("/user", async (req, res) => {
     }
 })
 
-app.patch("/user", async (req, res) => {
+app.patch("/user/:userId", async (req, res) => {
     try {
-        const userId = req.body?.userId;
+        const userId = req.params?.userId;
         const data = req.body
-        const user = await User.findByIdAndUpdate(userId, data);
-        // Same as const user = await User.findByIdAndUpdate({ _id: userId }, data);
+        const ALLOWED_FIELDS = ["password", "gender", "age", "photoUrl", "about", "skills"];
+        const isUpdateAllowed = Object.keys(data).every(field => ALLOWED_FIELDS.includes(field));
+        if (!isUpdateAllowed) {
+            res.status(400).send("Update not allowed");
+        }
+        const user = await User.findByIdAndUpdate(userId, data, {
+            runValidators: true, // runs validtors and enum check before inserting the document, otherwise they will run after insertion
+            returnDocument: "after"
+        });
+        // Same as const user = await User.findByIdAndUpdate({ _id: userId }, ...);
         if (!user) {
             res.status(404).send("User not found");
         } else {
