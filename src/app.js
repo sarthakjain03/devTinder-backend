@@ -1,6 +1,8 @@
 const express = require("express");
 const connectDB = require("./configs/database");
+const bcrypt = require("bcrypt");
 const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validations");
 const app = express();
 const port = 3003;
 
@@ -12,14 +14,25 @@ app.use(express.json());
 
 app.post("/signup", async (req, res) => {
     try {
-        const body = req.body;
+        validateSignUpData(req);
+        const { name, email, password, age, gender } = req.body;
+
+        // Encrypting the password using bcrypt
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const body = {
+            name,
+            email,
+            password: hashedPassword,
+            age,
+            gender,
+        };
         // Creating a new instance of the User model
         const newUser = new User(body);
         await newUser.save();
         res.send("User created successfully");
         
     } catch (error) {
-        res.status(500).send("Error occurred while signing up: " + error?.message);
+        res.status(400).send("Error occurred while signing up: " + error?.message);
     }
 })
 
@@ -34,7 +47,7 @@ app.get("/user", async (req, res) => {
         }
         
     } catch (error) {
-        res.status(500).send("Error occurred while fetching user: " + error?.message);
+        res.status(400).send("Error occurred while fetching user: " + error?.message);
     }
 })
 
@@ -48,7 +61,7 @@ app.get("/feed", async (req, res) => {
         }
         
     } catch (error) {
-        res.status(500).send("Error occurred while fetching users: " + error?.message);
+        res.status(400).send("Error occurred while fetching users: " + error?.message);
     }
 })
 
@@ -63,7 +76,7 @@ app.delete("/user", async (req, res) => {
         }
         
     } catch (error) {
-        res.status(500).send("Error occurred while deleting user: " + error?.message);
+        res.status(400).send("Error occurred while deleting user: " + error?.message);
     }
 })
 
@@ -88,8 +101,13 @@ app.patch("/user/:userId", async (req, res) => {
         }
         
     } catch (error) {
-        res.status(500).send("Error occurred while updating user: " + error?.message);
+        res.status(400).send("Error occurred while updating user: " + error?.message);
     }
+})
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send("Internal Server Error");
 })
 
 connectDB().then(() => {
