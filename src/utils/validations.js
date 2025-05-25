@@ -1,5 +1,15 @@
 const validator = require("validator");
 
+const validateLoginData = (req) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        throw new Error("All fields are required");
+    }
+    if (!validator.isEmail(email)) {
+        throw new Error("Invalid email format");
+    }
+}
+
 const validateSignUpData = (req) => {
   const { name, email, password, age } = req.body;
   if (!name || !email || !password) {
@@ -19,4 +29,4 @@ const validateSignUpData = (req) => {
   }
 };
 
-module.exports = { validateSignUpData };
+module.exports = { validateSignUpData, validateLoginData };
