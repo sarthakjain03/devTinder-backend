@@ -9,6 +9,7 @@ const {
   validateSignUpData,
   validateLoginData,
 } = require("./utils/validations");
+const userAuth = require("./middlewares/auth");
 const app = express();
 const port = 7777;
 
@@ -54,14 +55,14 @@ app.post("/login", async (req, res) => {
       return;
     }
 
-    const isPasswordMatched = await bcrypt.compare(password, user?.password);
+    const isPasswordMatched = await user.validatePassword(password);
     if (!isPasswordMatched) {
       res.status(400).send("Invalid email or password");
       return;
     }
     // Create a JWT Token
-    const token = jwt.sign({ _id: user._id }, "secretStringisVeryImport@nt");
-    res.cookie("token", token);
+    const token = user.generateJWT();
+    res.cookie("token", token, { expires: new Date(Date.now() + 24 * 60 * 60 * 1000) });
 
     res.send("Login successful");
   } catch (error) {
@@ -69,109 +70,11 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-    const { token } = cookies;
-    if (!token) {
-      res.status(401).send("Unauthorized");
-      return;
-    }
-
-    const decodedMessage = jwt.verify(token, "secretStringisVeryImport@nt");
-    const { _id } = decodedMessage;
-
-    const user = await User.findById(_id);
-    if (!user) {
-      res.status(400).send("Invalid Credentials");
-    } else {
-      res.send(user);
-    }
+    res.send(req.user);
   } catch (error) {
     res.status(400).send("Error fetching profile: " + error?.message);
-  }
-});
-
-app.get("/user", async (req, res) => {
-  try {
-    const userEmail = req.body?.email;
-    const user = await User.findOne({ email: userEmail });
-    if (!user) {
-      res.status(404).send("User not found");
-    } else {
-      res.send(user);
-    }
-  } catch (error) {
-    res
-      .status(400)
-      .send("Error occurred while fetching user: " + error?.message);
-  }
-});
-
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    if (users?.length === 0) {
-      res.status(404).send("No User Found");
-    } else {
-      res.send(users);
-    }
-  } catch (error) {
-    res
-      .status(400)
-      .send("Error occurred while fetching users: " + error?.message);
-  }
-});
-
-app.delete("/user", async (req, res) => {
-  try {
-    const userId = req.body?.userId;
-    const user = await User.findByIdAndDelete(userId);
-    if (!user) {
-      res.status(404).send("User not found");
-    } else {
-      res.send("User deleted successfully");
-    }
-  } catch (error) {
-    res
-      .status(400)
-      .send("Error occurred while deleting user: " + error?.message);
-  }
-});
-
-app.patch("/user/:userId", async (req, res) => {
-  try {
-    const userId = req.params?.userId;
-    const data = req.body;
-    const ALLOWED_FIELDS = [
-      "password",
-      "gender",
-      "age",
-      "photoUrl",
-      "about",
-      "skills",
-    ];
-    const isUpdateAllowed = Object.keys(data).every((field) =>
-      ALLOWED_FIELDS.includes(field)
-    );
-    if (!isUpdateAllowed) {
-      res.status(400).send("Update not allowed");
-      return;
-    }
-    const user = await User.findByIdAndUpdate(userId, data, {
-      runValidators: true, // runs validtors and enum check before inserting the document, otherwise they will run after insertion
-      returnDocument: "after",
-    });
-    // Same as const user = await User.findByIdAndUpdate({ _id: userId }, ...);
-    if (!user) {
-      res.status(404).send("User not found");
-    } else {
-      res.send("User updated successfully");
-    }
-  } catch (error) {
-    res
-      .status(400)
-      .send("Error occurred while updating user: " + error?.message);
   }
 });
 

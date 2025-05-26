@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 
 const userSchema = new mongoose.Schema(
   {
@@ -42,15 +43,31 @@ const userSchema = new mongoose.Schema(
       type: [String],
       validate: (value) => {
         if (value?.length > 20) {
-            throw new Error("Skills cannot exceed 20");
+          throw new Error("Skills cannot exceed 20");
         }
-      }
+      },
     },
   },
   {
     timestamps: true,
   }
 );
+
+userSchema.methods.generateJWT = function () {
+  // this = the current instance of the user model
+  const user = this; // Doesn't work inside arrow functions
+  const token = jwt.sign({ _id: user._id }, "secretStringisVeryImport@nt", {
+    expiresIn: "1d",
+  });
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (passwordInputByUser) {
+  const user = this;
+  const hashedPassword = user.password;
+  const isPasswordMatched = await bcrypt.compare(passwordInputByUser, hashedPassword);
+  return isPasswordMatched;
+};
 
 const User = mongoose.model("User", userSchema);
 
