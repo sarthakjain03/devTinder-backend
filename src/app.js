@@ -1,18 +1,24 @@
 const express = require("express");
-const connectDB = require("./configs/database");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+
+const connectDB = require("./configs/database");
 const User = require("./models/user");
 const {
   validateSignUpData,
   validateLoginData,
 } = require("./utils/validations");
 const app = express();
-const port = 3003;
+const port = 7777;
 
 // Prefer API level validations over schema level validations
 
 // Importing the body-parser middleware from json to javascript object
 app.use(express.json());
+
+// Parsing the cookies from the browser into JSON format
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
@@ -45,16 +51,44 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       res.status(400).send("Invalid email or password");
+      return;
     }
 
     const isPasswordMatched = await bcrypt.compare(password, user?.password);
     if (!isPasswordMatched) {
       res.status(400).send("Invalid email or password");
+      return;
     }
+    // Create a JWT Token
+    const token = jwt.sign({ _id: user._id }, "secretStringisVeryImport@nt");
+    res.cookie("token", token);
 
     res.send("Login successful");
   } catch (error) {
     res.status(400).send("Error occurred while logging in: " + error?.message);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!token) {
+      res.status(401).send("Unauthorized");
+      return;
+    }
+
+    const decodedMessage = jwt.verify(token, "secretStringisVeryImport@nt");
+    const { _id } = decodedMessage;
+
+    const user = await User.findById(_id);
+    if (!user) {
+      res.status(400).send("Invalid Credentials");
+    } else {
+      res.send(user);
+    }
+  } catch (error) {
+    res.status(400).send("Error fetching profile: " + error?.message);
   }
 });
 
@@ -122,6 +156,7 @@ app.patch("/user/:userId", async (req, res) => {
     );
     if (!isUpdateAllowed) {
       res.status(400).send("Update not allowed");
+      return;
     }
     const user = await User.findByIdAndUpdate(userId, data, {
       runValidators: true, // runs validtors and enum check before inserting the document, otherwise they will run after insertion
