@@ -29,4 +29,30 @@ const validateSignUpData = (req) => {
   }
 };
 
-module.exports = { validateSignUpData, validateLoginData };
+const validateProfileEditData = (req) => {
+  const allowedEditFields = ["age", "gender", "photoUrl", "about", "skills"];
+
+  const isEditAllowed = Object.keys(req.body)?.every((field) => allowedEditFields.includes(field));
+  if (!isEditAllowed) {
+    throw new Error("Invalid Edit Request");
+  }
+
+  const { age, gender, photoUrl, about, skills } = req.body;
+  if (age && age < 18) {
+    throw new Error("Age must be at least 18");
+  }
+  if (gender && gender !== "Male" && gender !== "Female" && gender !== "Other") {
+    throw new Error("Gender must be either Male, Female or Other");
+  }
+  if (photoUrl && !validator.isURL(photoUrl)) {
+    throw new Error("Photo Url must be a valid URL");
+  }
+  if (about && about?.length > 200) {
+    throw new Error("About must be less than 200 characters");
+  }
+  if (skills && skills?.length > 20) {
+    throw new Error("Skills must be less than 20");
+  }
+}
+
+module.exports = { validateSignUpData, validateLoginData, validateProfileEditData };
