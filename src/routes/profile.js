@@ -32,6 +32,6 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
   }
 });
 
-// PATCH /profile/password -> Forgot Password API
+// TODO: PATCH /profile/password -> Forgot Password API
 
 module.exports = profileRouter;

@@ -25,7 +25,10 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       required: true,
-      enum: ["Male", "Female", "Other"],
+      enum: {
+        values: ["Male", "Female", "Other"],
+        message: `{VALUE} is not a valid gender`,
+      },
     },
     age: {
       type: Number,
@@ -70,6 +73,6 @@ userSchema.methods.validatePassword = async function (passwordInputByUser) {
   return isPasswordMatched;
 };
 
-const User = mongoose.model("User", userSchema);
+const UserModel = mongoose.model("User", userSchema);
 
-module.exports = User;
+module.exports = UserModel;

@@ -19,7 +19,7 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 app.use("/profile", profileRouter);
-app.use("/", requestRouter);
+app.use("/request", requestRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
