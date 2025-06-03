@@ -5,6 +5,7 @@ const connectDB = require("./configs/database");
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/requests");
+const userRouter = require("./routes/user");
 
 const app = express();
 const port = 7777;
@@ -20,6 +21,7 @@ app.use(cookieParser());
 app.use("/", authRouter);
 app.use("/profile", profileRouter);
 app.use("/request", requestRouter);
+app.use("/user", userRouter)
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

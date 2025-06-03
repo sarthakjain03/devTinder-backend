@@ -38,7 +38,10 @@ requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
       });
     }
 
-    const customMessage = { ignored: "ignored", interested: "is interested in" }
+    const customMessage = {
+      ignored: "ignored",
+      interested: "is interested in",
+    };
 
     const connectionRequest = new ConnectionRequest({
       fromUserId,
@@ -55,6 +58,43 @@ requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
     res
       .status(400)
       .send("Error creating connection request: " + error?.message);
+  }
+});
+
+requestRouter.post("/review/:status/:requestId", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const { status, requestId } = req.params;
+
+    const allowedStatuses = ["accepted", "rejected"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status type: " + status,
+      });
+    }
+
+    const connectionRequest = await ConnectionRequest.findOne({
+      _id: requestId,
+      toUserId: loggedInUser._id,
+      status: "interested",
+    });
+    if (!connectionRequest) {
+      return res.status(404).json({
+        message: "Connection request not found",
+      });
+    }
+
+    connectionRequest.status = status;
+    const data = await connectionRequest.save();
+
+    res.json({
+      data,
+      message: `Connection request was ${status}`,
+    });
+  } catch (error) {
+    res
+      .status(400)
+      .send("Error reviewing connection request: " + error?.message);
   }
 });
 
