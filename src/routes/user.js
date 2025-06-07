@@ -89,7 +89,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       ]
     }).select(USER_SAFE_DATA).skip(offset).limit(limit);
 
-
+    res.json({ data: feedUsers, message: "Feed users successfully fetched" });
     
   } catch (error) {
     res.status(400).json({
