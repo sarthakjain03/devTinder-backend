@@ -25,8 +25,14 @@ authRouter.post("/signup", async (req, res) => {
     };
     // Creating a new instance of the User model
     const newUser = new User(body);
-    await newUser.save();
-    res.send("User created successfully");
+    const savedUser = await newUser.save();
+    // Create a JWT Token
+    const token = savedUser.generateJWT();
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    res.send(savedUser);
   } catch (error) {
     res.status(400).send("Error occurred while signing up: " + error?.message);
   }

@@ -11,8 +11,8 @@ const validateLoginData = (req) => {
 };
 
 const validateSignUpData = (req) => {
-  const { name, email, password, age } = req.body;
-  if (!name || !email || !password) {
+  const { name, email, password, age, gender } = req.body;
+  if (!name || !email || !password || !gender) {
     throw new Error("All fields are required");
   }
   if (name.length < 3 || name.length > 50) {
@@ -26,6 +26,9 @@ const validateSignUpData = (req) => {
   }
   if (age < 18) {
     throw new Error("Age must be at least 18");
+  }
+  if (!["Male", "Female", "Other"].includes(gender)) {
+    throw new Error("Gender must be either Male, Female or Other");
   }
 };
 
