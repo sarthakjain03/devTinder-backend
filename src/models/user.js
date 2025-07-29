@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema(
 userSchema.methods.generateJWT = function () {
   // this = the current instance of the user model
   const user = this; // Doesn't work inside arrow functions
-  const token = jwt.sign({ _id: user._id }, "secretStringisVeryImport@nt", {
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
   return token;
@@ -69,7 +69,10 @@ userSchema.methods.generateJWT = function () {
 userSchema.methods.validatePassword = async function (passwordInputByUser) {
   const user = this;
   const hashedPassword = user.password;
-  const isPasswordMatched = await bcrypt.compare(passwordInputByUser, hashedPassword);
+  const isPasswordMatched = await bcrypt.compare(
+    passwordInputByUser,
+    hashedPassword
+  );
   return isPasswordMatched;
 };
 
